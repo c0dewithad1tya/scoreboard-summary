@@ -38,4 +38,9 @@ public class Match {
         this.homeScore = homeScore;
         this.awayScore = awayScore;
     }
+
+    @Override
+    public String toString() {
+        return homeTeam + " " + homeScore + " - " + awayTeam + " " + awayScore;
+    }
 }

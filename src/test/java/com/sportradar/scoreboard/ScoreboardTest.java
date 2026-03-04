@@ -1,12 +1,15 @@
 package com.sportradar.scoreboard;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@DisplayName("Scoreboard")
 class ScoreboardTest {
 
     private Scoreboard scoreboard;
@@ -16,167 +19,221 @@ class ScoreboardTest {
         scoreboard = new Scoreboard();
     }
 
-    // --- Start Match ---
+    @Nested
+    @DisplayName("Start Match")
+    class StartMatch {
 
-    @Test
-    void startMatch_shouldAddMatchWithZeroZeroScore() {
-        scoreboard.startMatch("Mexico", "Canada");
+        @Test
+        @DisplayName("Should add a new match with initial score 0-0")
+        void shouldAddMatchWithZeroZeroScore() {
+            scoreboard.startMatch("Mexico", "Canada");
 
-        List<Match> summary = scoreboard.getSummary();
-        assertEquals(1, summary.size());
-        assertEquals("Mexico", summary.get(0).getHomeTeam());
-        assertEquals("Canada", summary.get(0).getAwayTeam());
-        assertEquals(0, summary.get(0).getHomeScore());
-        assertEquals(0, summary.get(0).getAwayScore());
+            List<Match> summary = scoreboard.getSummary();
+            assertEquals(1, summary.size());
+
+            Match match = summary.get(0);
+            System.out.println("Started: " + match);
+            assertEquals("Mexico", match.getHomeTeam());
+            assertEquals("Canada", match.getAwayTeam());
+            assertEquals(0, match.getHomeScore());
+            assertEquals(0, match.getAwayScore());
+        }
+
+        @Test
+        @DisplayName("Should reject duplicate match (same home and away teams)")
+        void shouldNotAllowDuplicateMatch() {
+            scoreboard.startMatch("Mexico", "Canada");
+
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> scoreboard.startMatch("Mexico", "Canada"));
+            System.out.println("Rejected duplicate: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Should reject match if a team is already playing")
+        void shouldNotAllowTeamAlreadyPlaying() {
+            scoreboard.startMatch("Mexico", "Canada");
+
+            IllegalArgumentException ex1 = assertThrows(IllegalArgumentException.class,
+                    () -> scoreboard.startMatch("Mexico", "Brazil"));
+            System.out.println("Rejected (home team busy): " + ex1.getMessage());
+
+            IllegalArgumentException ex2 = assertThrows(IllegalArgumentException.class,
+                    () -> scoreboard.startMatch("Brazil", "Canada"));
+            System.out.println("Rejected (away team busy): " + ex2.getMessage());
+        }
+
+        @Test
+        @DisplayName("Should reject null or blank team names")
+        void shouldNotAllowNullOrBlankTeamNames() {
+            assertThrows(IllegalArgumentException.class, () -> scoreboard.startMatch(null, "Canada"));
+            assertThrows(IllegalArgumentException.class, () -> scoreboard.startMatch("Mexico", null));
+            assertThrows(IllegalArgumentException.class, () -> scoreboard.startMatch("", "Canada"));
+            assertThrows(IllegalArgumentException.class, () -> scoreboard.startMatch("Mexico", "  "));
+            System.out.println("All null/blank team name inputs correctly rejected");
+        }
+
+        @Test
+        @DisplayName("Should reject match where home and away team are the same")
+        void shouldNotAllowSameTeamAsHomeAndAway() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> scoreboard.startMatch("Mexico", "Mexico"));
+            System.out.println("Rejected same team: " + ex.getMessage());
+        }
     }
 
-    @Test
-    void startMatch_shouldNotAllowDuplicateMatch() {
-        scoreboard.startMatch("Mexico", "Canada");
+    @Nested
+    @DisplayName("Update Score")
+    class UpdateScore {
 
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.startMatch("Mexico", "Canada"));
+        @Test
+        @DisplayName("Should update home and away scores with absolute values")
+        void shouldUpdateMatchScore() {
+            scoreboard.startMatch("Mexico", "Canada");
+            scoreboard.updateScore("Mexico", "Canada", 0, 5);
+
+            Match match = scoreboard.getSummary().get(0);
+            System.out.println("Updated: " + match);
+            assertEquals(0, match.getHomeScore());
+            assertEquals(5, match.getAwayScore());
+        }
+
+        @Test
+        @DisplayName("Should throw when updating score for a non-existent match")
+        void shouldThrowForNonExistentMatch() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> scoreboard.updateScore("Mexico", "Canada", 1, 0));
+            System.out.println("Rejected non-existent match: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Should reject negative score values")
+        void shouldNotAllowNegativeScores() {
+            scoreboard.startMatch("Mexico", "Canada");
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> scoreboard.updateScore("Mexico", "Canada", -1, 0));
+            assertThrows(IllegalArgumentException.class,
+                    () -> scoreboard.updateScore("Mexico", "Canada", 0, -1));
+            System.out.println("Negative scores correctly rejected");
+        }
     }
 
-    @Test
-    void startMatch_shouldNotAllowTeamAlreadyPlaying() {
-        scoreboard.startMatch("Mexico", "Canada");
+    @Nested
+    @DisplayName("Finish Match")
+    class FinishMatch {
 
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.startMatch("Mexico", "Brazil"));
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.startMatch("Brazil", "Canada"));
+        @Test
+        @DisplayName("Should remove the match from the scoreboard")
+        void shouldRemoveMatchFromScoreboard() {
+            scoreboard.startMatch("Mexico", "Canada");
+            System.out.println("Before finish: " + scoreboard.getSummary().size() + " match(es)");
+
+            scoreboard.finishMatch("Mexico", "Canada");
+            System.out.println("After finish: " + scoreboard.getSummary().size() + " match(es)");
+
+            assertTrue(scoreboard.getSummary().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should throw when finishing a non-existent match")
+        void shouldThrowForNonExistentMatch() {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> scoreboard.finishMatch("Mexico", "Canada"));
+            System.out.println("Rejected non-existent finish: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Should allow a team to start a new match after finishing the previous one")
+        void shouldAllowTeamToStartNewMatchAfter() {
+            scoreboard.startMatch("Mexico", "Canada");
+            scoreboard.finishMatch("Mexico", "Canada");
+            scoreboard.startMatch("Mexico", "Brazil");
+
+            Match match = scoreboard.getSummary().get(0);
+            System.out.println("New match after finish: " + match);
+            assertEquals(1, scoreboard.getSummary().size());
+            assertEquals("Brazil", match.getAwayTeam());
+        }
     }
 
-    @Test
-    void startMatch_shouldNotAllowNullOrBlankTeamNames() {
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.startMatch(null, "Canada"));
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.startMatch("Mexico", null));
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.startMatch("", "Canada"));
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.startMatch("Mexico", "  "));
+    @Nested
+    @DisplayName("Get Summary")
+    class GetSummary {
+
+        @Test
+        @DisplayName("Should return empty list when no matches are in progress")
+        void shouldReturnEmptyListWhenNoMatches() {
+            List<Match> summary = scoreboard.getSummary();
+            System.out.println("Summary with no matches: " + summary);
+            assertTrue(summary.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should order matches by total score in descending order")
+        void shouldOrderByTotalScoreDescending() {
+            scoreboard.startMatch("Mexico", "Canada");
+            scoreboard.startMatch("Spain", "Brazil");
+
+            scoreboard.updateScore("Mexico", "Canada", 0, 5);   // total 5
+            scoreboard.updateScore("Spain", "Brazil", 10, 2);    // total 12
+
+            List<Match> summary = scoreboard.getSummary();
+            printSummary(summary);
+
+            assertEquals("Spain", summary.get(0).getHomeTeam());
+            assertEquals("Mexico", summary.get(1).getHomeTeam());
+        }
+
+        @Test
+        @DisplayName("Should order by most recently started match when total scores are equal")
+        void shouldOrderByMostRecentlyStartedWhenTotalScoreEqual() {
+            scoreboard.startMatch("Mexico", "Canada");
+            scoreboard.startMatch("Spain", "Brazil");
+
+            scoreboard.updateScore("Mexico", "Canada", 0, 5);   // total 5
+            scoreboard.updateScore("Spain", "Brazil", 3, 2);     // total 5
+
+            List<Match> summary = scoreboard.getSummary();
+            printSummary(summary);
+
+            assertEquals("Spain", summary.get(0).getHomeTeam());
+            assertEquals("Mexico", summary.get(1).getHomeTeam());
+        }
+
+        @Test
+        @DisplayName("Should match the expected output from the requirements example")
+        void shouldMatchExampleFromRequirements() {
+            scoreboard.startMatch("Mexico", "Canada");
+            scoreboard.startMatch("Spain", "Brazil");
+            scoreboard.startMatch("Germany", "France");
+            scoreboard.startMatch("Uruguay", "Italy");
+            scoreboard.startMatch("Argentina", "Australia");
+
+            scoreboard.updateScore("Mexico", "Canada", 0, 5);
+            scoreboard.updateScore("Spain", "Brazil", 10, 2);
+            scoreboard.updateScore("Germany", "France", 2, 2);
+            scoreboard.updateScore("Uruguay", "Italy", 6, 6);
+            scoreboard.updateScore("Argentina", "Australia", 3, 1);
+
+            List<Match> summary = scoreboard.getSummary();
+
+            System.out.println("\n=== Live Football World Cup Score Board ===");
+            printSummary(summary);
+            System.out.println("============================================");
+
+            assertEquals(5, summary.size());
+            assertEquals("Uruguay", summary.get(0).getHomeTeam());
+            assertEquals("Spain", summary.get(1).getHomeTeam());
+            assertEquals("Mexico", summary.get(2).getHomeTeam());
+            assertEquals("Argentina", summary.get(3).getHomeTeam());
+            assertEquals("Germany", summary.get(4).getHomeTeam());
+        }
     }
 
-    @Test
-    void startMatch_shouldNotAllowSameTeamAsHomeAndAway() {
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.startMatch("Mexico", "Mexico"));
-    }
-
-    // --- Update Score ---
-
-    @Test
-    void updateScore_shouldUpdateMatchScore() {
-        scoreboard.startMatch("Mexico", "Canada");
-        scoreboard.updateScore("Mexico", "Canada", 0, 5);
-
-        Match match = scoreboard.getSummary().get(0);
-        assertEquals(0, match.getHomeScore());
-        assertEquals(5, match.getAwayScore());
-    }
-
-    @Test
-    void updateScore_shouldThrowForNonExistentMatch() {
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.updateScore("Mexico", "Canada", 1, 0));
-    }
-
-    @Test
-    void updateScore_shouldNotAllowNegativeScores() {
-        scoreboard.startMatch("Mexico", "Canada");
-
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.updateScore("Mexico", "Canada", -1, 0));
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.updateScore("Mexico", "Canada", 0, -1));
-    }
-
-    // --- Finish Match ---
-
-    @Test
-    void finishMatch_shouldRemoveMatchFromScoreboard() {
-        scoreboard.startMatch("Mexico", "Canada");
-        scoreboard.finishMatch("Mexico", "Canada");
-
-        assertTrue(scoreboard.getSummary().isEmpty());
-    }
-
-    @Test
-    void finishMatch_shouldThrowForNonExistentMatch() {
-        assertThrows(IllegalArgumentException.class,
-                () -> scoreboard.finishMatch("Mexico", "Canada"));
-    }
-
-    @Test
-    void finishMatch_shouldAllowTeamToStartNewMatchAfter() {
-        scoreboard.startMatch("Mexico", "Canada");
-        scoreboard.finishMatch("Mexico", "Canada");
-        scoreboard.startMatch("Mexico", "Brazil");
-
-        assertEquals(1, scoreboard.getSummary().size());
-        assertEquals("Brazil", scoreboard.getSummary().get(0).getAwayTeam());
-    }
-
-    // --- Get Summary (ordering) ---
-
-    @Test
-    void getSummary_shouldReturnEmptyListWhenNoMatches() {
-        assertTrue(scoreboard.getSummary().isEmpty());
-    }
-
-    @Test
-    void getSummary_shouldOrderByTotalScoreDescending() {
-        scoreboard.startMatch("Mexico", "Canada");
-        scoreboard.startMatch("Spain", "Brazil");
-
-        scoreboard.updateScore("Mexico", "Canada", 0, 5);   // total 5
-        scoreboard.updateScore("Spain", "Brazil", 10, 2);    // total 12
-
-        List<Match> summary = scoreboard.getSummary();
-        assertEquals("Spain", summary.get(0).getHomeTeam());
-        assertEquals("Mexico", summary.get(1).getHomeTeam());
-    }
-
-    @Test
-    void getSummary_shouldOrderByMostRecentlyStartedWhenTotalScoreEqual() {
-        scoreboard.startMatch("Mexico", "Canada");
-        scoreboard.startMatch("Spain", "Brazil");
-
-        scoreboard.updateScore("Mexico", "Canada", 0, 5);   // total 5
-        scoreboard.updateScore("Spain", "Brazil", 3, 2);     // total 5
-
-        List<Match> summary = scoreboard.getSummary();
-        // Spain started later, so it comes first when totals are equal
-        assertEquals("Spain", summary.get(0).getHomeTeam());
-        assertEquals("Mexico", summary.get(1).getHomeTeam());
-    }
-
-    @Test
-    void getSummary_shouldMatchExampleFromRequirements() {
-        // Start matches in order a-e
-        scoreboard.startMatch("Mexico", "Canada");
-        scoreboard.startMatch("Spain", "Brazil");
-        scoreboard.startMatch("Germany", "France");
-        scoreboard.startMatch("Uruguay", "Italy");
-        scoreboard.startMatch("Argentina", "Australia");
-
-        // Update scores
-        scoreboard.updateScore("Mexico", "Canada", 0, 5);
-        scoreboard.updateScore("Spain", "Brazil", 10, 2);
-        scoreboard.updateScore("Germany", "France", 2, 2);
-        scoreboard.updateScore("Uruguay", "Italy", 6, 6);
-        scoreboard.updateScore("Argentina", "Australia", 3, 1);
-
-        List<Match> summary = scoreboard.getSummary();
-
-        assertEquals(5, summary.size());
-        assertEquals("Uruguay", summary.get(0).getHomeTeam());    // 12, started 4th
-        assertEquals("Spain", summary.get(1).getHomeTeam());      // 12, started 2nd
-        assertEquals("Mexico", summary.get(2).getHomeTeam());     // 5
-        assertEquals("Argentina", summary.get(3).getHomeTeam());  // 4, started 5th
-        assertEquals("Germany", summary.get(4).getHomeTeam());    // 4, started 3rd
+    private void printSummary(List<Match> summary) {
+        for (int i = 0; i < summary.size(); i++) {
+            System.out.println((i + 1) + ". " + summary.get(i));
+        }
     }
 }
