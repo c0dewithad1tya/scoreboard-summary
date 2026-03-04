@@ -25,7 +25,22 @@ mvn clean package
 
 # Run a single test
 mvn test -Dtest="ScoreboardTest#getSummary_shouldMatchExampleFromRequirements"
+
+# Generate functional test report (written to target/test-report.md)
+mvn test -Dtest="TestReportGenerator"
 ```
+
+## Test Report
+
+Running `mvn test -Dtest="TestReportGenerator"` generates a markdown report at `target/test-report.md` containing:
+
+- **Test Scenario** — what is being tested
+- **Input** — the data and parameters used
+- **Expected** — the expected behavior or output
+- **Actual** — what the code actually produced
+- **Result** — PASS or FAIL
+
+The report covers 20 functional test scenarios across all four operations (Start Match, Update Score, Finish Match, Get Summary), including edge cases like null inputs, negative scores, duplicate matches, and the full sorting example from the requirements.
 
 ## Usage
 
