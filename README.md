@@ -40,7 +40,56 @@ Running `mvn test -Dtest="TestReportGenerator"` generates a markdown report at `
 - **Actual** — what the code actually produced
 - **Result** — PASS or FAIL
 
-The report covers 20 functional test scenarios across all four operations (Start Match, Update Score, Finish Match, Get Summary), including edge cases like null inputs, negative scores, duplicate matches, and the full sorting example from the requirements.
+The report covers **27 functional test scenarios** across all four operations, organized as follows:
+
+### Start Match (9 scenarios)
+
+| # | Scenario |
+|---|----------|
+| 1 | Start a new match with initial score 0-0 |
+| 2 | Reject duplicate match (same teams) |
+| 3 | Reject if home team is already playing |
+| 4 | Reject if away team is already playing |
+| 5 | Reject null home team |
+| 6 | Reject null away team |
+| 7 | Reject empty home team |
+| 8 | Reject blank away team |
+| 9 | Reject same team as home and away |
+
+### Update Score (4 scenarios)
+
+| # | Scenario |
+|---|----------|
+| 10 | Update score with absolute values |
+| 11 | Reject update for non-existent match |
+| 12 | Reject negative home score |
+| 13 | Reject negative away score |
+
+### Finish Match (3 scenarios)
+
+| # | Scenario |
+|---|----------|
+| 14 | Remove match from scoreboard |
+| 15 | Reject finish for non-existent match |
+| 16 | Team can start a new match after finishing |
+
+### Get Summary (11 scenarios)
+
+| # | Scenario |
+|---|----------|
+| 17 | Empty scoreboard returns empty list |
+| 18 | Order by total score descending (2 matches) |
+| 19 | Equal totals — most recently started first (2 matches) |
+| 20 | Full 5-match example from requirements spec |
+| 21 | 12-match league with distinct totals (12 down to 1) |
+| 22 | Multiple tie groups — recency tie-break within each group |
+| 23 | All 12 matches at 0-0 — ordered purely by most recently started |
+| 24 | Start 12, finish 4 — summary shows only remaining 8 in correct order |
+| 25 | Score updates dynamically flip summary ordering |
+| 26 | High-scoring blowout (10-0) vs five low-scoring ties (1-1) |
+| 27 | Start 12, finish 11 — single match remaining |
+
+Scenarios 21–27 simulate a **12-country World Cup league** using teams from Brazil, Germany, Argentina, France, England, Spain, Netherlands, Italy, Portugal, Uruguay, Belgium, and Croatia to exercise large-scale sorting, multi-level tie-breaking, partial finishes, dynamic re-ordering, and edge cases with extreme score distributions.
 
 ## Usage
 
