@@ -1,6 +1,6 @@
-# Live Football World Cup Score Board
+# Live Football Score Board and Summary Library
 
-A simple in-memory library that tracks ongoing football matches and their scores during the World Cup.
+A simple in-memory library that tracks ongoing football matches and their scores.
 
 ## Features
 
