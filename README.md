@@ -115,7 +115,7 @@ scoreboard.finishMatch("Mexico", "Canada");
 - A team cannot play in two matches simultaneously
 - Scores are absolute values (not incremental) and must be non-negative
 - The same matchup (home vs away) cannot be started twice without finishing the first one
-- Summary ordering uses insertion order to determine recency (no timestamps needed)
+- Summary ordering uses a monotonic start-order counter to determine recency (O(1) comparison, no timestamps needed)
 
 ## Design Decisions
 
@@ -123,3 +123,4 @@ scoreboard.finishMatch("Mexico", "Canada");
 - **No external dependencies** beyond JUnit 5 for testing
 - **TDD approach** — all functionality was driven by tests written before implementation
 - **Immutable summary** — `getSummary()` returns an unmodifiable copy to prevent external mutation
+- **O(n log n) sorting** — tie-breaking uses a pre-assigned start-order counter instead of `indexOf` lookups, keeping the comparator at O(1) per comparison
