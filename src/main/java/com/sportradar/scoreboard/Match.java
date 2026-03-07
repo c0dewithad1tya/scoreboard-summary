@@ -4,12 +4,14 @@ public class Match {
 
     private final String homeTeam;
     private final String awayTeam;
+    private final long startOrder;
     private int homeScore;
     private int awayScore;
 
-    public Match(String homeTeam, String awayTeam) {
+    public Match(String homeTeam, String awayTeam, long startOrder) {
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
+        this.startOrder = startOrder;
         this.homeScore = 0;
         this.awayScore = 0;
     }
@@ -32,6 +34,10 @@ public class Match {
 
     public int getTotalScore() {
         return homeScore + awayScore;
+    }
+
+    public long getStartOrder() {
+        return startOrder;
     }
 
     public void setScore(int homeScore, int awayScore) {

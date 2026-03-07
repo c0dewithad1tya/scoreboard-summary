@@ -46,8 +46,6 @@ class TestReportGenerator {
         scoreboard.startMatch("Mexico", "Canada");
         Match m = scoreboard.getSummary().get(0);
         String actual = m.toString();
-        String expected = "Mexico 0 - Canada 5".replace("5", "0");
-
         row(1, "Start Match", "Start a new match",
                 "homeTeam=Mexico, awayTeam=Canada",
                 "Match added with score 0-0",

@@ -7,6 +7,7 @@ import java.util.List;
 public class Scoreboard {
 
     private final List<Match> matches = new ArrayList<>();
+    private long matchCounter = 0;
 
     public void startMatch(String homeTeam, String awayTeam) {
         validateTeamName(homeTeam, "Home team");
@@ -20,7 +21,7 @@ public class Scoreboard {
             throw new IllegalArgumentException("Team is already in an active match");
         }
 
-        matches.add(new Match(homeTeam, awayTeam));
+        matches.add(new Match(homeTeam, awayTeam, ++matchCounter));
     }
 
     public void updateScore(String homeTeam, String awayTeam, int homeScore, int awayScore) {
@@ -42,7 +43,7 @@ public class Scoreboard {
         sorted.sort(Comparator
                 .comparingInt(Match::getTotalScore)
                 .reversed()
-                .thenComparing(Comparator.comparingInt(matches::indexOf).reversed()));
+                .thenComparingLong(m -> -m.getStartOrder()));
         return List.copyOf(sorted);
     }
 
